@@ -1,118 +1,6 @@
-; ----------------------------------------------------------------------------
-; DAML-specific keywords (treated as regular identifiers by Haskell grammar)
-; These need to be at the top for higher priority
-((variable) @keyword
-  (#any-of? @keyword
-    ; Template structure
-    "template"
-    "choice"
-    "controller"
-    "can"
-    "signatory"
-    "observer"
-    "ensure"
-    "agreement"
-    "key"
-    "maintainer"
-    "preconsuming"
-    "postconsuming"
-    "nonconsuming"
-    ; Interface
-    "interface"
-    "requires"
-    "viewtype"
-    "view"
-    "implements"
-    "method"
-    ; Exception
-    "exception"
-    "message"
-    "throw"
-    ; Contract references
-    "this"
-    "self"
-    ; Ledger actions
-    "create"
-    "exercise"
-    "exerciseByKey"
-    "fetch"
-    "fetchByKey"
-    "lookupByKey"
-    "archive"
-    "createAndExercise"
-    ; Script/testing
-    "script"
-    "submit"
-    "submitMustFail"
-    "submitMulti"
-    "submitMultiMustFail"
-    "query"
-    "queryContractId"
-    "queryContractKey"
-    "allocateParty"
-    "allocatePartyWithHint"
-    ; Commands
-    "createCmd"
-    "exerciseCmd"
-    "exerciseByKeyCmd"
-    "createAndExerciseCmd"
-    "archiveCmd"
-    ; Control flow
-    "abort"
-    "assert"
-    "assertMsg"
-    "assertAfter"
-    "assertBefore"
-    "error"
-    "debug"
-    "trace"
-    ; Time
-    "getTime"
-    "pass"
-    "passToDate"
-    "setTime"
-    ; Monadic
-    "pure"
-    "return"
-    "when"
-    "unless"
-    "forA"
-    "forA_"
-    "mapA"
-    "mapA_"
-    "sequence"
-    ; Optional
-    "Some"
-    "None"
-    "optional"
-    "fromSome"
-    "fromOptional"
-    "isSome"
-    "isNone"
-    ; Either
-    "Left"
-    "Right"
-    "either"
-    "fromLeft"
-    "fromRight"
-    "isLeft"
-    "isRight"
-    ; Common functions
-    "fmap"
-    "void"
-    "identity"
-    "const"
-    "flip"
-    "coerce"
-    "toParties"
-    "partyToText"
-    "partyFromText"
-    "intToDecimal"
-    "truncate"
-    "round"
-    "ceiling"
-    "floor"
-    "show"))
+; ============================================================================
+; DAML syntax highlighting for Zed (tree-sitter-haskell grammar)
+; ============================================================================
 
 ; ----------------------------------------------------------------------------
 ; Parameters and variables
@@ -143,7 +31,7 @@
 (expression/literal
   (float)) @number
 
-(char) @character
+(char) @string
 
 (string) @string
 
@@ -151,7 +39,7 @@
 
 (comment) @comment
 
-((haddock) @comment.documentation)
+((haddock) @comment)
 
 ; ----------------------------------------------------------------------------
 ; Punctuation
@@ -259,11 +147,87 @@
   (match
     expression: (expression/lambda)))
 
+; view patterns
+(view_pattern
+  [
+    (expression/variable) @function.call
+    (expression/qualified
+      (variable) @function.call)
+  ])
+
+; consider infix functions as operators
+(infix_id
+  [
+    (variable) @operator
+    (qualified
+      (variable) @operator)
+  ])
+
+; function calls with infix operator (e.g. func <$> a)
+(infix
+  [
+    (variable) @function.call
+    (qualified
+      ((module) @module
+        (variable) @function.call))
+  ]
+  .
+  (operator))
+
+; function calls with $ and bind operators
+([
+    (expression/variable) @function.call
+    (expression/qualified
+      (variable) @function.call)
+  ]
+  .
+  (operator) @_op
+  (#any-of? @_op "$" "<$>" ">>=" "=<<"))
+
+; function composition (lhs)
+(
+  [
+    (expression/variable) @function
+    (expression/qualified
+      (variable) @function)
+  ]
+  .
+  (operator) @_op
+  (#any-of? @_op "." ">>>" "***" ">=>" "<=<"))
+
+; function composition (rhs)
+((operator) @_op
+  .
+  [
+    (expression/variable) @function
+    (expression/qualified
+      (variable) @function)
+  ]
+  (#any-of? @_op "." ">>>" "***" ">=>" "<=<"))
+
+; function composition in definition
+(decl/function
+  name: (variable) @function
+  (match
+    expression: (infix
+      operator: (operator) @_op
+      (#any-of? @_op "." ">>>" "***" ">=>" "<=<"))))
+
 (apply
   [
     (expression/variable) @function.call
     (expression/qualified
       (variable) @function.call)
+  ])
+
+; variables being passed to a function call
+(apply
+  (_)
+  .
+  [
+    (expression/variable) @variable
+    (expression/qualified
+      (variable) @variable)
   ])
 
 ; main is always a function
@@ -302,15 +266,6 @@
 (quoter) @function.call
 
 ; ----------------------------------------------------------------------------
-; Exceptions/error handling
-((variable) @keyword.exception
-  (#any-of? @keyword.exception
-    "error" "undefined" "try" "tryJust" "tryAny" "catch" "catches" "catchJust" "handle" "handleJust"
-    "throw" "throwIO" "throwTo" "throwError" "ioError" "mask" "mask_" "uninterruptibleMask"
-    "uninterruptibleMask_" "bracket" "bracket_" "bracketOnErrorSource" "finally" "fail"
-    "onException" "expectationFailure"))
-
-; ----------------------------------------------------------------------------
 ; Fields
 (field_name
   (variable) @variable.member)
@@ -320,3 +275,39 @@
   .
   (children
     (variable) @variable.member))
+
+; ============================================================================
+; DAML-specific keywords
+; These are at the bottom for highest priority — they override any previous
+; matches for variables/functions that happen to be DAML keywords.
+; ============================================================================
+((variable) @keyword
+  (#any-of? @keyword
+    ; Template structure
+    "template"
+    "choice"
+    "controller"
+    "can"
+    "signatory"
+    "observer"
+    "ensure"
+    "agreement"
+    "key"
+    "maintainer"
+    "with"
+    ; Consuming annotations
+    "preconsuming"
+    "postconsuming"
+    "nonconsuming"
+    ; Interface
+    "interface"
+    "requires"
+    "viewtype"
+    "view"
+    "implements"
+    "method"
+    "for"
+    ; Exception
+    "exception"
+    "message"
+    "throw"))

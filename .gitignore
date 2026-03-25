@@ -1,4 +1,5 @@
 target/
+grammars/haskell/
 
 .DS_Store
 extension.wasm

@@ -10,6 +10,7 @@
   (match)
   (function)
   (data_type)
+  (newtype)
   (class)
   (instance)
 ] @indent
