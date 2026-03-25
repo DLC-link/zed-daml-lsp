@@ -4,7 +4,7 @@ description = "DAML smart contract language support for Zed"
 version = "0.1.0"
 schema_version = 1
 authors = ["BitSafe"]
-repository = "https://github.com/bitsafe/zed-daml-lsp"
+repository = "https://github.com/DLC-link/zed-daml-lsp"
 
 [language_servers.daml-language-server]
 name = "DAML Language Server"
