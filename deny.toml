@@ -1,0 +1,14 @@
+# cargo-deny configuration. The CI job runs `cargo-deny check advisories`
+# only. Bans, licenses, and sources need policy decisions first.
+#
+# This is the only advisory-exception list in the repo. cargo-deny resolves
+# the dependency graph with features applied, so it flags only crates that
+# compile. Do not add an entry for a crate behind a disabled feature: check
+# with `cargo tree -i <crate>`, and empty output means it never compiles.
+#
+# Every entry is `{ id = "RUSTSEC-...", reason = "..." }`, with a comment
+# above it that names the crate that pulls it in, why no fix exists, and
+# when to drop the ignore.
+
+[advisories]
+ignore = []
