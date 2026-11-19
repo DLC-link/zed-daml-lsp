@@ -1,0 +1,21 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cargo-deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # RustSec advisories only. deny.toml is the exception list.
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories
